@@ -42,7 +42,7 @@ class AppModel extends Model {
 				51 => false, 52 => false, 55 => true, 56 => true, 57 => true,
 				58 => false, 59 => false, 60 => false, 61 => false, 62 => false,
 				63 => false, 64 => false, 65 => false, 66 => false, 67 => true,
-				68 => false, 69 => false
+				68 => false, 69 => false, 71 => false, 72 => false
 			)
 		)
 	);
@@ -90,6 +90,21 @@ class AppModel extends Model {
 				$this->Sighting = Classregistry::init('Sighting');
 				$this->Sighting->addUuids();
 				$this->Sighting->deleteAll(array('NOT' => array('Sighting.type' => array(0, 1, 2))));
+				break;
+			case '2.4.71':
+				$this->OrgBlacklist = Classregistry::init('OrgBlacklist');
+				$values = array(
+					array('org_uuid' => '58d38339-7b24-4386-b4b4-4c0f950d210f', 'org_name' => 'Setec Astrononomy', 'comment' => 'default example'),
+					array('org_uuid' => '58d38326-eda8-443a-9fa8-4e12950d210f', 'org_name' => 'Acme Finance', 'comment' => 'default example')
+				);
+				foreach ($values as $value) {
+					$found = $this->OrgBlacklist->find('first', array('conditions' => array('org_uuid' => $value['org_uuid']), 'recursive' => -1));
+					if (empty($found)) {
+						$this->OrgBlacklist->create();
+						$this->OrgBlacklist->save($value);
+					}
+				}
+				$this->updateDatabase($command);
 				break;
 			default:
 				$this->updateDatabase($command);
@@ -662,6 +677,13 @@ class AppModel extends Model {
 				$sqlArray[] = "ALTER TABLE users ADD COLUMN date_created bigint(20);";
 				$sqlArray[] = "ALTER TABLE users ADD COLUMN date_modified bigint(20);";
 				break;
+			case '2.4.71':
+				$sqlArray[] = "UPDATE attributes SET comment = '' WHERE comment is NULL;";
+				$sqlArray[] = "ALTER TABLE attributes CHANGE comment comment text COLLATE utf8_bin NOT NULL;";
+				break;
+			case '2.4.72':
+				$sqlArray[] = 'ALTER TABLE feeds ADD lookup_visible tinyint(1) DEFAULT 0;';
+				break;
 			case 'fixNonEmptySharingGroupID':
 				$sqlArray[] = 'UPDATE `events` SET `sharing_group_id` = 0 WHERE `distribution` != 4;';
 				$sqlArray[] = 'UPDATE `attributes` SET `sharing_group_id` = 0 WHERE `distribution` != 4;';
@@ -976,5 +998,21 @@ class AppModel extends Model {
 
 	public function checkFilename($filename) {
 		return preg_match('@^([a-z0-9_.]+[a-z0-9_.\- ]*[a-z0-9_.\-]|[a-z0-9_.])+$@i', $filename);
+	}
+
+	public function setupRedis() {
+		if (class_exists('Redis')) {
+			$redis = new Redis();
+		} else {
+			return false;
+		}
+		$host = Configure::read('MISP.redis_host') ? Configure::read('MISP.redis_host') : '127.0.0.1';
+		$port = Configure::read('MISP.redis_port') ? Configure::read('MISP.redis_port') : 6379;
+		$database = Configure::read('MISP.redis_database') ? Configure::read('MISP.redis_database') : 13;
+		if (!$redis->connect($host, $port)) {
+			return false;
+		}
+		$redis->select($database);
+		return $redis;
 	}
 }

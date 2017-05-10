@@ -228,7 +228,7 @@
 							<li <?php if ($menuItem === 'eventBlacklistsAdd') echo 'class="active"';?>><a href="<?php echo $baseurl;?>/eventBlacklists/add">Blacklists Event</a></li>
 							<li <?php if ($menuItem === 'eventBlacklists') echo 'class="active"';?>><a href="<?php echo $baseurl;?>/eventBlacklists">Manage Event Blacklists</a></li>
 						<?php endif;
-						if (Configure::read('MISP.enableOrgBlacklisting')): ?>
+						if (!Configure::check('MISP.enableOrgBlacklisting') || Configure::read('MISP.enableOrgBlacklisting') !== false): ?>
 							<li <?php if ($menuItem === 'orgBlacklistsAdd') echo 'class="active"';?>><a href="<?php echo $baseurl;?>/orgBlacklists/add">Blacklists Organisation</a></li>
 							<li <?php if ($menuItem === 'orgBlacklists') echo 'class="active"';?>><a href="<?php echo $baseurl;?>/orgBlacklists">Manage Org Blacklists</a></li>
 						<?php endif;
@@ -311,6 +311,7 @@
 					<li id='liindex'><a href="<?php echo $baseurl;?>/feeds/index">List Feeds</a></li>
 					<li id='liadd'><a href="<?php echo $baseurl;?>/feeds/add">Add Feed</a></li>
 					<li id='liadd'><a href="<?php echo $baseurl;?>/feeds/importFeeds">Import Feeds from JSON</a></li>
+					<li id='licompare'><a href="<?php echo $baseurl;?>/feeds/compareFeeds">Feed overlap analysis matrix</a></li>
 					<?php if ($menuItem === 'edit'): ?>
 						<li class="active"><a href="#">Edit Feed</a></li>
 					<?php elseif ($menuItem === 'previewIndex'): ?>
